@@ -1,0 +1,506 @@
+import {
+  CodeSurfer,
+  CodeSurferColumns,
+  Step,
+} from "code-surfer";
+import { github, vsDark, oceanicNext } from "@code-surfer/themes";
+
+import { Notes, Head, Split } from 'mdx-deck'
+
+export const theme = vsDark;
+
+<Head>
+  <title>Vue 3 - The Re-Vue-ening</title>
+</Head>
+
+<div style="color: #6AD798; font-size: 4rem; display: flex; justify-content: center; align-items: center;">
+  <img src="https://vuejs.org/images/logo.png" />
+  <h1>ue 3</h1>
+</div>
+<h2>The Re-Vue-ening</h2>
+
+---
+
+<h1 style="color: #6AD798">Typescript</h1>
+
+Vue 3 is written entirely in Typescript, greatly improving support relative to Vue 2.
+
+---
+
+<CodeSurfer>
+
+```html title='Typescript Component'
+<template>
+  <h2>This is a Vue 3 component!</h2>
+  <button @click="increase">Clicked {{ count }} times.</button>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref } from "vue";
+export default defineComponent({
+  setup() {
+    const count = ref(0)
+    const increase = () => {
+      count.value++
+    }
+
+    return {
+      count,
+      increase,
+    }
+  }
+});
+</script>
+```
+
+</CodeSurfer>
+
+
+---
+
+<h1 style="color: #6AD798">Payload Reduction</h1>
+
+<Appear>
+  <p>Vue 3 fully minified is 10kb, half the size of Vue 2</p>
+  <p>Vue 3 supports tree shaking</p>
+  <p>This means portions of Vue 3 you aren't using aren't included in your bundle.</p>
+</Appear>
+
+---
+
+<h1 style="color: #6AD798">Improved Performance</h1>
+
+<Appear>
+  <p>New reactivity system is built on object proxies</p>
+  <p>Improved optimization of generated code</p>
+  <p>Reduce number of parent/child re-renders</p>
+  <p>This results in a 2x performance improvement in many use cases!</p>
+</Appear>
+
+---
+
+<h1 style="color: #6AD798">Fragments</h1>
+
+<Appear>
+  <p>Template fragments are now supported, similar to react.</p>
+  <p>As a result, multiple root nodes can now be included in a component</p>
+</Appear>
+
+---
+
+<CodeSurfer>
+
+```html title='Fragments' subtitle='Vue2 cannot have multiple root nodes in a component'
+<template>
+  <input type="email" v-model="email">
+  <span v-if="error">{{ error }}</span>
+</template>
+```
+
+```html title='Fragments' subtitle='This tends results in extra divs to wrap components'
+<template>
+  <div>
+    <input type="email" v-model="email">
+    <span v-if="error">{{ error }}</span>
+  </div>
+</template>
+```
+
+```html title='Fragments' subtitle='Vue3 supports multiple root nodes, resulting in cleaner DOM trees'
+<template>
+  <input type="email" v-model="email">
+  <span v-if="error">{{ error }}</span>
+</template>
+```
+
+</CodeSurfer>
+
+---
+
+<h1 style="color: #6AD798">Suspense</h1>
+
+<Appear>
+  <p>Pairs with the composition API and detects async setup components</p>
+  <p>Has a default and fallback slot</p>
+  <p>Displays content in fallback slot if any children are still awaiting setup</p>
+</Appear>
+
+---
+
+<CodeSurfer>
+
+```html title='Suspense' subtitle='Here is a simple vue 2 component'
+<script>
+export default {
+  data() {
+    return {
+      data: [],
+    }
+  },
+  async mounted() {
+    const { data } = await axios.get("/some/api/endpoint");
+    this.data = data;
+  }
+}
+</script>
+```
+
+```html title='Suspense' subtitle='A common Vue2 pattern is to track loading per component'
+<script>
+export default {
+  data() {
+    return {
+      isLoading: false,
+      data: [],
+    }
+  },
+  async mounted() {
+    this.isLoading = true;
+    const { data } = await axios.get("/some/api/endpoint");
+    this.data = data;
+    this.isLoading = false;
+  }
+}
+</script>
+```
+
+```html 7,12,16:19 title='Suspense' subtitle='Error states then also need to be accounted for'
+<script>
+export default {
+  data() {
+    return {
+      isLoading: false,
+      data: [],
+      error: null,
+    }
+  },
+  async mounted() {
+    this.isLoading = true;
+    try {
+      const { data } = await axios.get("/some/api/endpoint");
+      this.data = data;
+      this.isLoading = false;
+    } catch (e) {
+      this.error = e;
+      this.isLoading = false;
+    }
+  }
+}
+</script>
+```
+
+```html title='Suspense' subtitle='This results in a lot of boilerplate'
+<script>
+export default {
+  data() {
+    return {
+      isLoading: false,
+      data: [],
+      error: null,
+    }
+  },
+  async mounted() {
+    this.isLoading = true;
+    try {
+      const { data } = await axios.get("/some/api/endpoint");
+      this.data = data;
+      this.isLoading = false;
+    } catch (e) {
+      this.error = e;
+      this.isLoading = false;
+    }
+  }
+}
+</script>
+```
+
+```html title='Suspense' subtitle='Here is a similar component using the composition API'
+<script>
+import { ref, reactive } from 'vue';
+
+export default {
+  name: "SampleComponent",
+  async setup() {
+    let isLoading = ref(true);
+    let error = ref(null);
+
+    try {
+      const response = await axios.get("/some/api/endpoint");
+      let data = reactive(response.data);
+      isLoading.value = false;
+    } catch (e) {
+      error.value = e;
+      isLoading.value = false;
+    }
+
+    return {
+      isLoading,
+      error,
+      data,
+    };
+  }
+}
+</script>
+```
+
+```html 2:14 title='Suspense' subtitle='If we plan to use Suspense, we can simplify this component'
+<script>
+import { reactive } from 'vue';
+
+export default {
+  name: "SampleComponent",
+  async setup() {
+      const response = await axios.get("/some/api/endpoint");
+      let data = reactive(response.data);
+
+    return {
+      data,
+    };
+  }
+}
+</script>
+```
+
+```html title='Suspense' subtitle='Here is a simple template using Suspense with the previous component'
+<template>
+  <Suspense>
+    <template #default>
+      <SampleComponent>
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+```
+
+```html 3:5 title='Suspense' subtitle='Suspense will detect any async setup components in the default slot'
+<template>
+  <Suspense>
+    <template #default>
+      <SampleComponent>
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+```
+
+```html 6:8 title='Suspense' subtitle='While they are running, the fallback slot will be rendered'
+<template>
+  <Suspense>
+    <template #default>
+      <SampleComponent>
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+```
+
+```html title='Suspense' subtitle='Errors may also be caught at this level'
+<template>
+  <Suspense>
+    <template #default>
+      <SampleComponent>
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+
+<script>
+import { ref, onErrorCaptured } from 'vue'
+
+setup () {
+  const error = ref(null)
+  onErrorCaptured(e => {
+    error.value = e
+    return true
+  })
+  return { error }
+}
+</script>
+```
+
+```html 2:5 title='Suspense' subtitle='Then displayed as desired'
+<template>
+  <div v-if="error">
+   {{ error }}
+  </div>
+  <Suspense v-else>
+    <template #default>
+      <SampleComponent>
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+
+<script>
+import { ref, onErrorCaptured } from 'vue'
+
+setup () {
+  const error = ref(null)
+  onErrorCaptured(e => {
+    error.value = e
+    return true
+  })
+  return { error }
+}
+</script>
+```
+
+</CodeSurfer>
+
+---
+
+<h1 style="color: #6AD798">Portals</h1>
+
+<Appear>
+  <p>Portals allow you to render a component elsewhere in the DOM tree.</p>
+  <p>Even outside your application's scope.</p>
+  <p>eg: to render a modal.</p>
+</Appear>
+
+---
+
+<CodeSurfer>
+
+```html title='Portals' subtitle='A common Vue2 pattern for showing a modal'
+<template>
+  <div class="user-card">
+    <b> {{ user.name }} </b>  
+    <button @click="isPopUpOpen = true">Remove user</button>
+    <div v-show="isPopUpOpen">
+      <p>Are you sure?</p>
+      <button @click="removeUser">Yes</button>
+      <button @click="isPopUpOpen = false">No</button>
+    </div>
+  </div>
+</template>
+```
+
+```html 2,5:10 title='Portals' subtitle='Because the popup is in the user-card component, it can be impacted by it or anything up the tree'
+<template>
+  <div class="user-card">
+    <b> {{ user.name }} </b>  
+    <button @click="isPopUpOpen = true">Remove user</button>
+    <div v-show="isPopUpOpen">
+      <p>Are you sure?</p>
+      <button @click="removeUser">Yes</button>
+      <button @click="isPopUpOpen = false">No</button>
+    </div>
+  </div>
+</template>
+```
+
+```html 5:11 title='Portals' subtitle='A Portal can be used to extract part of a component to another part of the DOM'
+<template>
+  <div class="user-card">
+    <b> {{ user.name }} </b>  
+    <button @click="isPopUpOpen = true">Remove user</button>
+    <Portal target="#modal-target">
+      <div v-show="isPopUpOpen">
+        <p>Are you sure?</p>
+        <button @click="removeUser">Yes</button>
+        <button @click="isPopUpOpen = false">No</button>
+      </div>
+    </Portal>
+  </div>
+</template>
+```
+
+</CodeSurfer>
+
+---
+
+<h1 style="color: #6AD798">Reactivity Improvements</h1>
+
+<Appear>
+  <p>Vue 2's reactivity model wouldn't catch some changes:</p>
+  <p>Adding / Deleting properties on an object.</p>
+  <p>manipulating an array via index.</p>
+  <p>Vue 3's reactivity model is built on Proxies, and can detect these changes.</p>
+</Appear>
+
+---
+
+<h1 style="color: #6AD798">Multiple v-models</h1>
+
+<Appear>
+  <p>v-model is helpful shorthand for v-bind:value and @input</p>
+  <p>Vue 2 is limited to one v-model for a component</p>
+  <p>Vue 3 permits multiple v-model directives on a single component</p>
+</Appear>
+
+---
+
+<CodeSurfer>
+
+```html title='Multiple v models' subtitle='v-model is helpful shorthand for @input and :value'
+<template>
+  <User @input="(v) => name = v" :name="name" />
+</template>
+```
+
+```html title='Multiple v models' subtitle='v-model is helpful shorthand for @input and :value'
+<template>
+  <User v-model="name" />
+</template>
+```
+
+```html title='Multiple v models' subtitle='In Vue2 any additional values had to be handled the verbose way'
+<template>
+  <User v-model="name" @hide="hidden = true" :hidden="hidden" />
+</template>
+```
+
+```html title='Multiple v models' subtitle='Vue3 supports multiple v-model shorthands with a property name indicator'
+<template>
+  <User v-model:name="name" v-model:hidden="hidden" />
+</template>
+```
+
+</CodeSurfer>
+
+---
+
+<h1 style="color: #6AD798">Composition API</h1>
+
+<Appear>
+  <p>The composition api makes it easier to organize code by function.</p>
+  <p>Facilitates sharing code between components.</p>
+  <p>Inspired by React Hooks.</p>
+</Appear>
+
+---
+
+<h1 style="color: #6AD798">Upcoming Features</h1>
+
+- [script setup](https://github.com/vuejs/rfcs/blob/sfc-improvements/active-rfcs/0000-sfc-script-setup.md)
+- [css vars](https://github.com/vuejs/rfcs/blob/sfc-improvements/active-rfcs/0000-sfc-style-variables.md)
+
+---
+
+<h1 style="color: #6AD798">Limitations</h1>
+
+- IE11 support build is not yet complete
+- Many plugins are in beta for Vue 3
+  - eg: Vue-Router, Vuex
+
+---
+
+<h1 style="color: #6AD798">Resources</h1>
+
+- [Repo](https://gitlabee.swifttrans.com/webdevgroup/training/intro-to-vue-3)
+- [LogRocket Blog](https://blog.logrocket.com/new-features-in-vue-3-and-how-to-use-them/)
+- [Vue 3 Docs](https://v3.vuejs.org/guide/introduction.html)
+- [Vue 2 Migration Guide](https://v3.vuejs.org/guide/migration/introduction.html)
+- [Vue Mastery](https://www.vuemastery.com/)
+- [Vue School](https://vueschool.io/)
+
